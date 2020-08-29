@@ -1,0 +1,121 @@
+# Deploying and Configuring sample e-commerce application in a ready to use manner with the help of Ansible.
+
+# Deploy Pre-Requisites
+-
+  name: Deploying Pre-Requisites for the application
+  hosts: localhost
+  tasks:
+    - name: Install FirewallD
+      yum:
+        name: firewalld
+        state: present
+    - name: Start FirewallD service
+      service:
+        name: firewalld
+        state: started
+    - name: Enable firewalld in server
+      service: 
+        name: firewalld 
+        enabled: yes
+
+# Deploy and Configure Database
+-
+  name: Deploying and Configuring Database
+  hosts: localhost
+  tasks:
+    - name: Installing MariaDB Server
+      yum:
+        name: mariadb-server
+        state: present
+    - name: Start MariaDB Server
+      service:
+        name: mariadb
+        state: started
+    - name: Enable MariaDB Server
+      service:
+        name: mariadb
+        enabled: yes
+-
+  name: Configuring firewall for Database
+  hosts: localhost
+  tasks:
+    - name: add port to firewall-cmd
+      firewalld:
+        port: 3306/tcp
+        zone: public
+        permanent: yes
+        state: enabled
+    - name: reload firewall
+      command: firewall-cmd --reload
+
+# Deploy and Configure Web
+-
+  name: Install required packages
+  hosts: localhost
+  vars:
+    packages:
+      - httpd
+      - php
+      - php-mysql
+  tasks:
+    - name: Install required packages
+      yum:
+        name: '{{ item }}'
+        state: present
+      with_items: "{{ packages }}"
+        
+    - name: add port to firewall-cmd
+      firewalld:
+        port: 80/tcp
+        zone: public
+        permanent: yes
+        state: enabled
+    - name: reload firewall
+      command: firewall-cmd --reload
+
+-
+  name: Configure httpd
+  hosts: localhost
+  tasks:
+    - name: configure httpd
+      command: sudo sed -i 's/index.html/index.php/g' /etc/httpd/conf/httpd.conf
+    - name: start httpd service
+      service:
+        name: httpd
+        state: started
+    - name: enable httpd service
+      service:
+        name: httpd
+        enabled: yes
+-
+  name: Download & Configure Code
+  hosts: localhost
+  tasks:
+    - name: Install Git module
+      yum:
+        name: git
+        state: present
+    - name: download Code from git
+      git:
+        repo: https://github.com/kodekloudhub/learning-app-ecommerce.git
+        dest: /var/www/html/
+    - name: update index.php file
+      command: sudo sed -i 's/172.20.1.101/localhost/g' /var/www/html/index.php
+
+# Configuring db & adding entries with db script from repo.
+
+- 
+  name: Configuring Database
+  hosts: localhost
+  tasks:
+    - name: create a database named 'ecomdb'
+      command: mysql -e "create database ecomdb"
+    - name: create a db user named 'ecomuser'
+      command: mysql -e "create user 'ecomuser'@'localhost' identified by 'ecompassword'"
+    - name: grant priviledges to db user
+      command: mysql -e "grant all privileges on *.* to 'ecomuser'@'localhost'"
+    - name: create a database named 'ecomdb'
+      command: mysql -e "flush privileges"
+    - name: create entries in DB
+      command: mysql < /var/www/html/assets/db-load-script.sql
+
