@@ -1,6 +1,8 @@
 # deploying_Ecomerce-Website_Ansible
 
 This is a sample e-commerce application built for learning purposes.
+Here is the deployment Structure:
+<img src="https://github.com/sumanth979/deploying_Ecomerce-Website_Ansible/blob/master/deployment%20structure.png" alt="Deployment">
 
 Here's how to deploy it on CentOS systems:
 
@@ -98,4 +100,5 @@ mysql < /var/www/html/assets/db-load-script.sql
 ```
 curl http://localhost
 ```
-
+Output:
+![](https://github.com/sumanth979/deploying_Ecomerce-Website_Ansible/blob/master/deployment%20structure.png =250x250)
